@@ -15,14 +15,15 @@
 #include <boost/bind/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/asio.hpp>
+#include <boost/smart_ptr.hpp>
 
 using boost::asio::ip::udp;
 
-std::string make_daytime_string()
+boost::shared_ptr<std::string> make_daytime_string()
 {
-  using namespace std; // For time_t, time and ctime;
-  time_t now = time(0);
-  return ctime(&now);
+	using namespace std; // For time_t, time and ctime;
+	time_t now = time(0);
+	return boost::make_shared<std::string>(ctime(&now));
 }
 
 class udp_server
@@ -49,8 +50,7 @@ private:
   {
     if (!error)
     {
-      boost::shared_ptr<std::string> message(
-          new std::string(make_daytime_string()));
+      boost::shared_ptr<std::string> message(make_daytime_string());
 
       socket_.async_send_to(boost::asio::buffer(*message), remote_endpoint_,
           boost::bind(&udp_server::handle_send, this, message,
