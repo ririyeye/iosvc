@@ -8,38 +8,42 @@
 class UDP_SESSION {
     public:
 	UDP_SESSION(boost::asio::ip::udp::socket &insocket)
-		: _socket(insocket)
+		: socket(insocket)
 	{
 		this_session_id = session_id++;
+		start_receive();
 	}
-	boost::array<char, 2048> recv_buffer;
-	boost::array<char, 2048> snd_buffer;
-	boost::asio::ip::udp::endpoint ep;
-
-	static void start_new_receive(boost::asio::ip::udp::socket &insocket)
+	~UDP_SESSION()
 	{
-		auto session = boost::make_shared<UDP_SESSION> (insocket);
-		insocket.async_receive_from(
-			boost::asio::buffer(session->recv_buffer), session->ep,
+		printf("end session %d\n", this_session_id);
+	}
+
+	void start_receive()
+	{
+		socket.async_receive_from(
+			boost::asio::buffer(recv_buffer), ep,
 			boost::bind(
-				&UDP_SESSION::handle_receive, session.get(), session,
+				&UDP_SESSION::handle_receive, this,
 				boost::asio::placeholders::error,
 				boost::asio::placeholders::bytes_transferred));
 	}
 
-	void handle_receive(boost::shared_ptr<UDP_SESSION> udp,
-			    const boost::system::error_code &error,
-			    std::size_t /*bytes_transferred*/
+	void handle_receive(
+		const boost::system::error_code &error,
+		std::size_t /*bytes_transferred*/
 	);
 
-	void handle_transmit(boost::shared_ptr<UDP_SESSION> udp,
-			     const boost::system::error_code &error,
-			     std::size_t /*bytes_transferred*/
+	void handle_transmit(
+		const boost::system::error_code &error,
+		std::size_t /*bytes_transferred*/
 	);
 
     private:
+	boost::array<char, 2048> recv_buffer;
+	boost::array<char, 2048> snd_buffer;
+	boost::asio::ip::udp::endpoint ep;
 	int this_session_id;
-	boost::asio::ip::udp::socket &_socket;
+	boost::asio::ip::udp::socket &socket;
 	static int session_id;
 };
 

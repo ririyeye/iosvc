@@ -17,28 +17,26 @@
 #include <boost/asio.hpp>
 #include <boost/smart_ptr.hpp>
 #include <boost/thread.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
 #include "udp_session.h"
 
 using namespace boost;
 using boost::asio::ip::udp;
 using boost::system::error_code;
 
-class udp_server {
-    public:
-	udp_server(boost::asio::io_service &io_context, int port)
-		: socket_(io_context, udp::endpoint(udp::v4(), port))
-	{
-		UDP_SESSION::start_new_receive(socket_);
-	}
-	udp::socket socket_;
-};
-
 int main()
 {
+
 	try {
 		boost::asio::io_service io_service;
-		udp_server server(io_service, 8888);
+		boost::asio::ip::udp::socket udp_server_endpoint(io_service, udp::endpoint(udp::v4(), 8888));
 
+		//add work session
+		boost::ptr_vector<UDP_SESSION> sessions;
+		for (unsigned i = 0; i < boost::thread::hardware_concurrency(); i++) {
+			sessions.push_back(new UDP_SESSION(udp_server_endpoint));
+		}
+		//add work thread
 		boost::thread_group group;
 		for (unsigned i = 0; i < boost::thread::hardware_concurrency();
 		     ++i)
