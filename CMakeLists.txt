@@ -6,9 +6,8 @@ PROJECT(PROJECT_IOSVC)
 
 add_executable(iosvc main.cpp)
 
-target_link_libraries(iosvc boost_system)
-#target_link_libraries(iosvc boost_thread)
 target_link_libraries(iosvc pthread)
+target_link_libraries(iosvc boost_thread)
 
 INSTALL(TARGETS iosvc
        RUNTIME DESTINATION .
