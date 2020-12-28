@@ -1,5 +1,5 @@
 
-add_executable(ioclient main.cpp dummy_client.cpp)
+add_executable(ioclient main.cpp dummy_client.cpp client_dat.cpp mycrypto.cpp)
 target_link_libraries(ioclient pthread)
 target_link_libraries(ioclient boost_thread)
 

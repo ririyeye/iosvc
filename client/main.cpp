@@ -22,7 +22,7 @@ int main()
 	try {
 		boost::asio::io_service io_service;
 
-		DUMMY_CLIENT iob(io_service, boost::asio::ip::make_address("139.180.204.124"), 8888);
+		DUMMY_CLIENT iob(io_service, boost::asio::ip::make_address("139.180.204.124"), 12312);
 
 
 		boost::thread_group group;

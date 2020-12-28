@@ -1,9 +1,11 @@
 #include "dummy_client.h"
 #include <iostream>
+#include "mycrypto.h"
 
 void DUMMY_CLIENT::init_svc()
 {
-	int len = snprintf(snd_buffer.c_array(), snd_buffer.max_size(), "test\n");
+	unsigned char dat[128];
+	int len = crypto_data(snd_buffer.c_array(), dat, sizeof(dat), snd_buffer.max_size());
 	udp_socket.async_send_to(
 		boost::asio::buffer(snd_buffer, len), udp_ep,
 		boost::bind(&DUMMY_CLIENT::handle_transmit, this,
@@ -14,6 +16,7 @@ void DUMMY_CLIENT::init_svc()
 void DUMMY_CLIENT::wait_end(const boost::system::error_code &ec)
 {
 	if (!ec) {
+		init_svc();
 	} else {
 		std::cout << ec << std::endl;
 		init_svc();
