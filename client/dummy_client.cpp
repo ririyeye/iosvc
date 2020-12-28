@@ -6,6 +6,13 @@ void DUMMY_CLIENT::init_svc()
 {
 	unsigned char dat[128];
 	int len = crypto_data(snd_buffer.c_array(), dat, sizeof(dat), snd_buffer.max_size());
+
+	if (len <= 0) {
+		timer.expires_from_now(boost::posix_time::seconds(5));
+		timer.async_wait(boost::bind(&DUMMY_CLIENT::wait_end, this, boost::asio::placeholders::error));
+		return;
+	}
+
 	udp_socket.async_send_to(
 		boost::asio::buffer(snd_buffer, len), udp_ep,
 		boost::bind(&DUMMY_CLIENT::handle_transmit, this,

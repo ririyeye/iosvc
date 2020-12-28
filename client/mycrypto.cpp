@@ -23,7 +23,7 @@ int crypto_data(void *dst, void *src, size_t inlen, size_t outmax)
 
 	CRYPTO_HEADER ch;
 	ch.version = 0;
-	ch.type = 0;
+	ch.type = 0xbb;
 	ch.actual_size = inlen;
 	ch.session_id = 0;
 	ch.sn = 1;
