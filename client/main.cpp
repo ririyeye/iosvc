@@ -17,15 +17,14 @@ using boost::system::error_code;
 
 int main()
 {
-
 	try {
-		boost::asio::io_service  io_service;
+		boost::asio::io_service io_service;
 		boost::asio::ip::udp::socket udp_socket(io_service, boost::asio::ip::udp::v4());
-
+		boost::asio::ip::udp::endpoint udp_ep(boost::asio::ip::make_address("139.180.204.124"), 8888);
 		//add work session
- 		udp_socket.send_to(
-                boost::asio::buffer("Hello world!"),
-                boost::asio::ip::udp::endpoint{boost::asio::ip::make_address("139.180.204.124"), 8888});
+		udp_socket.send_to(
+			boost::asio::buffer("Hello world!"),
+			udp_ep);
 
 	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;

@@ -9,16 +9,9 @@ add_executable(iosvc main.cpp udp_session.cpp)
 target_link_libraries(iosvc pthread)
 target_link_libraries(iosvc boost_thread)
 
+add_subdirectory(client)
 
-add_executable(ioclient main_client.cpp)
-target_link_libraries(ioclient pthread)
-target_link_libraries(ioclient boost_thread)
 
 INSTALL(TARGETS iosvc
        RUNTIME DESTINATION .
 )
-
-INSTALL(TARGETS ioclient
-       RUNTIME DESTINATION .
-)
-
