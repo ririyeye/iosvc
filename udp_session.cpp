@@ -1,5 +1,7 @@
 #include "udp_session.h"
 #include <boost/smart_ptr.hpp>
+#include <boost/format.hpp>
+#include <iostream>
 
 int UDP_SESSION::session_id = 0;
 
@@ -16,7 +18,7 @@ void UDP_SESSION::handle_receive(
 )
 {
 	if (!error) {
-		printf("session = %d , receive %s\n", this_session_id, recv_buffer.c_array());
+		std::cout << ep << boost::format("session = %1% , receive %2%\n") % this_session_id % recv_buffer.c_array() << std::endl;
 
 		auto p = make_daytime_string();
 		int len = snprintf(snd_buffer.c_array(), 2048, "test\n");
