@@ -1,5 +1,5 @@
 
-add_executable(ioclient main.cpp iot_client_session.cpp)
+add_executable(ioclient main.cpp dummy_client.cpp)
 target_link_libraries(ioclient pthread)
 target_link_libraries(ioclient boost_thread)
 

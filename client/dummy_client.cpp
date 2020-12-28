@@ -1,34 +1,37 @@
-#include "iot_client_session.h"
+#include "dummy_client.h"
 #include <iostream>
 
-void IOT_BASE::init_svc()
+void DUMMY_CLIENT::init_svc()
 {
 	int len = snprintf(snd_buffer.c_array(), snd_buffer.max_size(), "test\n");
 	udp_socket.async_send_to(
 		boost::asio::buffer(snd_buffer, len), udp_ep,
-		boost::bind(&IOT_BASE::handle_transmit, this,
+		boost::bind(&DUMMY_CLIENT::handle_transmit, this,
 			    boost::asio::placeholders::error,
 			    boost::asio::placeholders::bytes_transferred));
 }
 
-void IOT_BASE::wait_end(const boost::system::error_code &ec)
+void DUMMY_CLIENT::wait_end(const boost::system::error_code &ec)
 {
-	std::cout << ec << std::endl;
-	init_svc();
+	if (!ec) {
+	} else {
+		std::cout << ec << std::endl;
+		init_svc();
+	}
 }
 
-void IOT_BASE::handle_transmit(
+void DUMMY_CLIENT::handle_transmit(
 	const boost::system::error_code &error,
 	std::size_t num /*bytes_transferred*/
 )
 {
 	if (!error) {
 		timer.expires_from_now(boost::posix_time::seconds(5));
-		timer.async_wait(boost::bind(&IOT_BASE::wait_end, this, boost::asio::placeholders::error));
+		timer.async_wait(boost::bind(&DUMMY_CLIENT::wait_end, this, boost::asio::placeholders::error));
 	}
 }
 
-void IOT_BASE::handle_receive(
+void DUMMY_CLIENT::handle_receive(
 	const boost::system::error_code &error,
 	std::size_t /*bytes_transferred*/
 )

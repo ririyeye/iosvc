@@ -11,23 +11,10 @@ class IOT_BASE {
 		boost::asio::io_service &in_io_svc, boost::asio::ip::address addr, int port)
 		: io_service(in_io_svc), udp_socket(io_service, boost::asio::ip::udp::v4()), udp_ep(addr, port), timer(io_service)
 	{
-		init_svc();
 	}
 
-    private:
-	void init_svc();
+    protected:
 
-	void handle_receive(
-		const boost::system::error_code &error,
-		std::size_t /*bytes_transferred*/
-	);
-
-	void handle_transmit(
-		const boost::system::error_code &error,
-		std::size_t /*bytes_transferred*/
-	);
-
-	void wait_end(const boost::system::error_code &ec);
 
 	boost::asio::io_service &io_service;
 	boost::asio::ip::udp::socket udp_socket;
