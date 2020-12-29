@@ -9,8 +9,18 @@ void TLV_PKG::add_tlv(int tag, void *src, int len)
 	TLV_NODE nd;
 	nd.tag = tag;
 	nd.tlvdat.resize(len);
-	memcpy(&nd.tlvdat[0], src, len);
 
+	std::copy((char *)src, (char *)src + len, &nd.tlvdat[0]);
+	dat.emplace_back(nd);
+}
+
+void TLV_PKG::add_rev_tlv(int tag, void *src, int len)
+{
+	TLV_NODE nd;
+	nd.tag = tag;
+	nd.tlvdat.resize(len);
+
+	std::reverse_copy((char *)src, (char *)src + len, &nd.tlvdat[0]);
 	dat.emplace_back(nd);
 }
 
@@ -23,7 +33,7 @@ std::shared_ptr<std::vector<char> > TLV_PKG::Transfer2dat(uint16_t cmd, uint32_t
 		maxlen += nod.tlvdat.size();
 	}
 
-	std::shared_ptr<std::vector<char> > ret = std::make_shared<std::vector<char>>();
+	std::shared_ptr<std::vector<char> > ret = std::make_shared<std::vector<char> >();
 	ret->resize(maxlen);
 
 	int offset = 0 + header_offset;
@@ -34,7 +44,7 @@ std::shared_ptr<std::vector<char> > TLV_PKG::Transfer2dat(uint16_t cmd, uint32_t
 		uint16_t len = htons(nod.tlvdat.size());
 		memcpy(pos0 + offset + 0, &tag, 2);
 		memcpy(pos0 + offset + 2, &len, 2);
-		std::reverse_copy(nod.tlvdat.begin(), nod.tlvdat.end(), pos0 + offset + 4);
+		std::copy(nod.tlvdat.begin(), nod.tlvdat.end(), pos0 + offset + 4);
 
 		offset += 4;
 		offset += nod.tlvdat.size();

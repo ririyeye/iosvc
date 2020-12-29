@@ -11,7 +11,8 @@ void DUMMY_CLIENT::init_svc()
 	index = 0;
 	session_id = 0;
 
-	tlv.add_tlv(255, &sn, sizeof(sn));
+	tlv.add_rev_tlv(255, &sn, sizeof(sn));
+
 	auto dat = tlv.Transfer2dat(cmd, index, session_id);
 	int len = crypto_data(snd_buffer.c_array(), &dat->at(0), dat->size(), snd_buffer.max_size(), session_id, sn);
 	if (len <= 0) {
@@ -32,8 +33,6 @@ void DUMMY_CLIENT::wait_end(const boost::system::error_code &ec)
 	if (!ec) {
 		init_svc();
 	} else {
-		std::cout << ec << std::endl;
-		printf("timer cannel\n");
 	}
 }
 
@@ -62,10 +61,15 @@ void DUMMY_CLIENT::handle_receive(
 	std::size_t sz /*bytes_transferred*/
 )
 {
+	static int session_id = 0;
 	if (!error) {
-		printf("get from server %lu\n", sz);
+		printf("get from server %d,%lu\n", session_id++, sz);
 		timer.cancel();
-		timer.expires_from_now(boost::posix_time::seconds(5));
-		timer.async_wait(boost::bind(&DUMMY_CLIENT::wait_end, this, boost::asio::placeholders::error));
+#if 0
+		//timer.expires_from_now(boost::posix_time::seconds(5));
+		//timer.async_wait(boost::bind(&DUMMY_CLIENT::wait_end, this, boost::asio::placeholders::error));
+#else
+		init_svc();
+#endif
 	}
 }

@@ -7,7 +7,9 @@
 
 struct TLV_PKG {
     public:
-	void add_tlv(int tag, void *dat, int len);
+	void add_rev_tlv(int tag, void *src, int len);
+	void add_tlv(int tag, void *src, int len);
+
 	std::shared_ptr<std::vector<char> > Transfer2dat(uint16_t cmd, uint32_t index, uint32_t session_id);
 
     private:
