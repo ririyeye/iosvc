@@ -12,7 +12,6 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "dummy_client.h"
 
-
 using namespace boost;
 using boost::asio::ip::udp;
 using boost::system::error_code;
@@ -22,8 +21,9 @@ int main()
 	try {
 		boost::asio::io_service io_service;
 
-		DUMMY_CLIENT iob(io_service, boost::asio::ip::make_address("139.180.204.124"), 12312);
-
+		for (int i = 0; i < 1; i++) {
+			new DUMMY_CLIENT(io_service, boost::asio::ip::make_address("139.180.204.124"), 12312, 10000 + i);
+		}
 
 		boost::thread_group group;
 		for (unsigned i = 0; i < boost::thread::hardware_concurrency();
