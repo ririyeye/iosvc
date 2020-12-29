@@ -3,6 +3,51 @@
 #include <arpa/inet.h>
 #include <algorithm>
 #include "crc16.h"
+#include "mycrypto.h"
+
+std::shared_ptr<TLV_PKG> TLV_PKG::GenFrombytes(char *dat, size_t len)
+{
+	std::shared_ptr<TLV_PKG> ret = std::make_shared<TLV_PKG>();
+
+	char buff[1024];
+	int res = decrypto_data(buff, dat, len);
+	if (res > 0) {
+		//pack head
+		uint16_t cmd;
+		memcpy(&cmd, buff + 2, 2);
+		cmd = ntohs(cmd);
+		ret->cmd = cmd;
+
+		uint32_t index;
+		memcpy(&index, buff + 4, 4);
+		cmd = ntohl(index);
+		ret->index = index;
+
+		uint32_t session;
+		memcpy(&session, buff + 8, 4);
+		session = ntohl(session);
+		ret->session_id = session;
+
+		char *buffer = buff + 12;
+
+		while (1) {
+			uint16_t proto_tag;
+			memcpy(&proto_tag, buffer, sizeof(uint16_t));
+			proto_tag = ntohs(proto_tag);
+			uint16_t proto_length;
+			memcpy(&proto_length, buffer + sizeof(uint16_t), sizeof(uint16_t));
+			proto_length = ntohs(proto_length);
+
+			if (buffer + 4 + proto_length <= buff + res) {
+				ret->add_tlv(proto_tag, buffer + 4, proto_length);
+				buffer += (4 + proto_length);
+			} else {
+				break;
+			}
+		}
+	}
+	return ret;
+}
 
 void TLV_PKG::add_tlv(int tag, void *src, int len)
 {

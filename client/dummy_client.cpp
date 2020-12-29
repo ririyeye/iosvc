@@ -2,6 +2,7 @@
 #include <iostream>
 #include "mycrypto.h"
 #include "client_dat.h"
+#include <boost/format.hpp>
 
 void DUMMY_CLIENT::init_svc()
 {
@@ -14,7 +15,7 @@ void DUMMY_CLIENT::init_svc()
 	tlv.add_rev_tlv(255, &sn, sizeof(sn));
 
 	auto dat = tlv.Transfer2dat(cmd, index, session_id);
-	int len = crypto_data(snd_buffer.c_array(), &dat->at(0), dat->size(), snd_buffer.max_size(), session_id, sn);
+	int len = encrypto_data(snd_buffer.c_array(), &dat->at(0), dat->size(), snd_buffer.max_size(), session_id, sn);
 	if (len <= 0) {
 		timer.expires_from_now(boost::posix_time::seconds(5));
 		timer.async_wait(boost::bind(&DUMMY_CLIENT::wait_end, this, boost::asio::placeholders::error));
@@ -65,9 +66,21 @@ void DUMMY_CLIENT::handle_receive(
 	if (!error) {
 		printf("get from server %d,%lu\n", session_id++, sz);
 		timer.cancel();
-#if 0
-		//timer.expires_from_now(boost::posix_time::seconds(5));
-		//timer.async_wait(boost::bind(&DUMMY_CLIENT::wait_end, this, boost::asio::placeholders::error));
+
+		auto p = TLV_PKG::GenFrombytes(recv_buffer.c_array(), sz);
+		if (!p) {
+			printf("no tlv\n");
+		}
+
+		std::cout << boost::format("cmd = %1% , index %2% session_id %3%") % p->cmd % p->index % p->session_id;
+		for (auto &nd : p->dat) {
+			std::cout << boost::format("\n	tag %1%,len %2%") % nd.tag % nd.tlvdat.size();
+		}
+
+		std::cout << std::endl;
+#if 1
+		timer.expires_from_now(boost::posix_time::seconds(5));
+		timer.async_wait(boost::bind(&DUMMY_CLIENT::wait_end, this, boost::asio::placeholders::error));
 #else
 		init_svc();
 #endif

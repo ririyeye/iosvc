@@ -11,8 +11,12 @@ struct TLV_PKG {
 	void add_tlv(int tag, void *src, int len);
 
 	std::shared_ptr<std::vector<char> > Transfer2dat(uint16_t cmd, uint32_t index, uint32_t session_id);
+	static std::shared_ptr<TLV_PKG> GenFrombytes(char *dat, size_t len);
 
-    private:
+	int cmd;
+	uint16_t session_id;
+	uint16_t index;
+
 	struct TLV_NODE {
 		int tag;
 		std::vector<unsigned char> tlvdat;
