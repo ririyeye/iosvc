@@ -11,7 +11,7 @@ typedef struct
 	uint64_t sn;
 } CRYPTO_HEADER;
 
-int crypto_data(void *dst, void *src, size_t inlen, size_t outmax)
+int crypto_data(void *dst, void *src, size_t inlen, size_t outmax, uint16_t insession_id, uint64_t insn)
 {
 	if (!dst || !src || !inlen || !outmax) {
 		return -1;
@@ -25,8 +25,8 @@ int crypto_data(void *dst, void *src, size_t inlen, size_t outmax)
 	ch.version = 0;
 	ch.type = 0xbb;
 	ch.actual_size = inlen;
-	ch.session_id = 0;
-	ch.sn = 1;
+	ch.session_id = insession_id;
+	ch.sn = insn;
 
 	memcpy(dst, &ch, sizeof(CRYPTO_HEADER));
 

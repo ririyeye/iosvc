@@ -1,12 +1,21 @@
 #include "dummy_client.h"
 #include <iostream>
 #include "mycrypto.h"
+#include "client_dat.h"
 
 void DUMMY_CLIENT::init_svc()
 {
-	unsigned char dat[128];
-	int len = crypto_data(snd_buffer.c_array(), dat, sizeof(dat), snd_buffer.max_size());
+	TLV_PKG tlv;
+	uint64_t type_id = 0x3;
+	uint64_t sn = 10086 | (type_id << 56);
 
+	int cmd = 1;
+	int index = 2;
+	uint32_t session_id = 3;
+
+	tlv.add_tlv(255, &sn, sizeof(sn));
+	auto dat = tlv.Transfer2dat(cmd, index, session_id);
+	int len = crypto_data(snd_buffer.c_array(), &dat->at(0), dat->size(), snd_buffer.max_size(), session_id, sn);
 	if (len <= 0) {
 		timer.expires_from_now(boost::posix_time::seconds(5));
 		timer.async_wait(boost::bind(&DUMMY_CLIENT::wait_end, this, boost::asio::placeholders::error));

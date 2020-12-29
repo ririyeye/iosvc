@@ -26,6 +26,9 @@ class DUMMY_CLIENT:public IOT_BASE{
 	);
 
 	void wait_end(const boost::system::error_code &ec);
+
+	boost::array<char, 2048> recv_buffer;
+	boost::array<char, 2048> snd_buffer;
 };
 
 #endif

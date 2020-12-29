@@ -14,15 +14,10 @@ class IOT_BASE {
 	}
 
     protected:
-
-
 	boost::asio::io_service &io_service;
 	boost::asio::ip::udp::socket udp_socket;
 	boost::asio::ip::udp::endpoint udp_ep;
 	boost::asio::deadline_timer timer;
-
-	boost::array<char, 2048> recv_buffer;
-	boost::array<char, 2048> snd_buffer;
 };
 
 #endif
