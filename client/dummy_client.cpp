@@ -15,16 +15,18 @@ void DUMMY_CLIENT::start()
 			return;
 		}
 		boost::system::error_code ec;
+		if(!udp_socket.is_open()) return;
 		udp_socket.async_send_to(
 			boost::asio::buffer(snd_buffer, len), udp_ep, yield[ec]);
 
 		timer.expires_from_now(std::chrono::seconds(5));
+		if(!udp_socket.is_open()) return;
 		int recsz = udp_socket.async_receive_from(
 			boost::asio::buffer(recv_buffer), udp_ep, yield[ec]);
 
-		decode_login_session(recsz);
-
-		timer.expires_from_now(std::chrono::seconds(5));
+		if(recsz > 0) decode_login_session(recsz);
+		udp_socket.close();
+		timer.cancel();
 	});
 
 	boost::asio::spawn(strand, [this](boost::asio::yield_context yield) {
@@ -35,8 +37,10 @@ void DUMMY_CLIENT::start()
 				udp_socket.close();
 			}
 		}
+#if 0
 		timer.expires_from_now(std::chrono::seconds(5));
 		timer.async_wait(yield[ignored_ec]);
+#endif
 		start();
 	});
 }
