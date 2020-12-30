@@ -8,24 +8,13 @@ class DUMMY_CLIENT : public IOT_BASE {
 		boost::asio::io_service &in_io_svc, boost::asio::ip::address addr, int port, uint64_t insn)
 		: IOT_BASE(in_io_svc, addr, port), sn(insn)
 	{
-		init_svc();
+		start();
 	}
 
     private:
-	void init_svc();
-
-	void handle_receive(
-		const boost::system::error_code &error,
-		std::size_t /*bytes_transferred*/
-	);
-
-	void handle_transmit(
-		const boost::system::error_code &error,
-		std::size_t /*bytes_transferred*/
-	);
-
-	void wait_end(const boost::system::error_code &ec);
-
+	void start();
+	int make_login_session();
+	void decode_login_session(size_t sz);
 	boost::array<char, 2048> recv_buffer;
 	boost::array<char, 2048> snd_buffer;
 

@@ -4,7 +4,44 @@
 #include "client_dat.h"
 #include <boost/format.hpp>
 
-void DUMMY_CLIENT::init_svc()
+void DUMMY_CLIENT::start()
+{
+	boost::asio::spawn(strand, [this](boost::asio::yield_context yield) {
+		udp_socket.open(boost::asio::ip::udp::v4());
+
+		int len = make_login_session();
+		if (len <= 0) {
+			timer.expires_from_now(std::chrono::seconds(5));
+			return;
+		}
+		boost::system::error_code ec;
+		udp_socket.async_send_to(
+			boost::asio::buffer(snd_buffer, len), udp_ep, yield[ec]);
+
+		timer.expires_from_now(std::chrono::seconds(5));
+		int recsz = udp_socket.async_receive_from(
+			boost::asio::buffer(recv_buffer), udp_ep, yield[ec]);
+
+		decode_login_session(recsz);
+
+		timer.expires_from_now(std::chrono::seconds(5));
+	});
+
+	boost::asio::spawn(strand, [this](boost::asio::yield_context yield) {
+		boost::system::error_code ignored_ec;
+		while (udp_socket.is_open()) {
+			timer.async_wait(yield[ignored_ec]);
+			if (timer.expires_from_now() <= std::chrono::seconds(0)) {
+				udp_socket.close();
+			}
+		}
+		timer.expires_from_now(std::chrono::seconds(5));
+		timer.async_wait(yield[ignored_ec]);
+		start();
+	});
+}
+
+int DUMMY_CLIENT::make_login_session()
 {
 	TLV_PKG tlv;
 	//登录 无密钥
@@ -16,73 +53,27 @@ void DUMMY_CLIENT::init_svc()
 
 	auto dat = tlv.Transfer2dat(cmd, index, session_id);
 	int len = encrypto_data(snd_buffer.c_array(), &dat->at(0), dat->size(), snd_buffer.max_size(), session_id, sn);
-	if (len <= 0) {
-		timer.expires_from_now(boost::posix_time::seconds(5));
-		timer.async_wait(boost::bind(&DUMMY_CLIENT::wait_end, this, boost::asio::placeholders::error));
-		return;
-	}
-
-	udp_socket.async_send_to(
-		boost::asio::buffer(snd_buffer, len), udp_ep,
-		boost::bind(&DUMMY_CLIENT::handle_transmit, this,
-			    boost::asio::placeholders::error,
-			    boost::asio::placeholders::bytes_transferred));
+	return len;
 }
 
-void DUMMY_CLIENT::wait_end(const boost::system::error_code &ec)
-{
-	if (!ec) {
-		init_svc();
-	} else {
-	}
-}
-
-void DUMMY_CLIENT::handle_transmit(
-	const boost::system::error_code &error,
-	std::size_t num /*bytes_transferred*/
-)
-{
-	if (!error) {
-		udp_socket.async_receive_from(
-			boost::asio::buffer(recv_buffer), udp_ep,
-			boost::bind(&DUMMY_CLIENT::handle_receive, this,
-				    boost::asio::placeholders::error,
-				    boost::asio::placeholders::bytes_transferred));
-
-		timer.cancel();
-		timer.expires_from_now(boost::posix_time::seconds(1));
-		timer.async_wait(boost::bind(&DUMMY_CLIENT::wait_end, this, boost::asio::placeholders::error));
-	} else {
-		/* code */
-	}
-}
-
-void DUMMY_CLIENT::handle_receive(
-	const boost::system::error_code &error,
+void DUMMY_CLIENT::decode_login_session(
 	std::size_t sz /*bytes_transferred*/
 )
 {
 	static int session_id = 0;
-	if (!error) {
-		printf("get from server %d,%lu\n", session_id++, sz);
-		timer.cancel();
 
-		auto p = TLV_PKG::GenFrombytes(recv_buffer.c_array(), sz);
-		if (!p) {
-			printf("no tlv\n");
-		}
+	printf("get from server %d,%lu\n", session_id++, sz);
+	timer.cancel();
 
-		std::cout << boost::format("cmd = %1% , index %2% session_id %3%") % p->cmd % p->index % p->session_id;
-		for (auto &nd : p->dat) {
-			std::cout << boost::format("\n	tag %1%,len %2%") % nd.tag % nd.tlvdat.size();
-		}
-
-		std::cout << std::endl;
-#if 1
-		timer.expires_from_now(boost::posix_time::seconds(5));
-		timer.async_wait(boost::bind(&DUMMY_CLIENT::wait_end, this, boost::asio::placeholders::error));
-#else
-		init_svc();
-#endif
+	auto p = TLV_PKG::GenFrombytes(recv_buffer.c_array(), sz);
+	if (!p) {
+		printf("no tlv\n");
 	}
+
+	std::cout << boost::format("cmd = %1% , index %2% session_id %3%") % p->cmd % p->index % p->session_id;
+	for (auto &nd : p->dat) {
+		std::cout << boost::format("\n	tag %1%,len %2%") % nd.tag % nd.tlvdat.size();
+	}
+
+	std::cout << std::endl;
 }
