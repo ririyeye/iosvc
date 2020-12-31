@@ -3,45 +3,52 @@
 #include "mycrypto.h"
 #include "client_dat.h"
 #include <boost/format.hpp>
+#include <boost/asio/io_context_strand.hpp>
 
+void testa(int b){
+	printf("123 = %d\n",b);
+
+}
 void DUMMY_CLIENT::start()
 {
-	boost::asio::spawn(strand, [this](boost::asio::yield_context yield) {
-		udp_socket.open(boost::asio::ip::udp::v4());
+	boost::asio::spawn(strand.context(), [this](boost::asio::yield_context yield) {
+		try {
+			if(!udp_socket.is_open())
+				udp_socket.open(boost::asio::ip::udp::v4());
 
-		int len = make_login_session();
-		if (len <= 0) {
+			int len = make_login_session();
+			if (len <= 0) {
+				timer.expires_from_now(std::chrono::seconds(5));
+				return;
+			}
+
+			udp_socket.async_send_to(
+				boost::asio::buffer(snd_buffer, len), udp_ep, yield);
+
 			timer.expires_from_now(std::chrono::seconds(5));
-			return;
+
+			int recsz = udp_socket.async_receive_from(
+				boost::asio::buffer(recv_buffer), udp_ep, yield);
+
+			if (recsz > 0)
+				decode_login_session(recsz);
+		} catch (std::exception &exp) {
+			std::cout << "123"<< exp.what() << std::endl;
 		}
-		boost::system::error_code ec;
-		if(!udp_socket.is_open()) return;
-		udp_socket.async_send_to(
-			boost::asio::buffer(snd_buffer, len), udp_ep, yield[ec]);
-
-		timer.expires_from_now(std::chrono::seconds(5));
-		if(!udp_socket.is_open()) return;
-		int recsz = udp_socket.async_receive_from(
-			boost::asio::buffer(recv_buffer), udp_ep, yield[ec]);
-
-		if(recsz > 0) decode_login_session(recsz);
-		udp_socket.close();
 		timer.cancel();
+		boost::system::error_code ignored_ec;
+		udp_socket.close(ignored_ec);
 	});
 
-	boost::asio::spawn(strand, [this](boost::asio::yield_context yield) {
+	boost::asio::spawn(strand.context(), [this](boost::asio::yield_context yield) {
 		boost::system::error_code ignored_ec;
 		while (udp_socket.is_open()) {
 			timer.async_wait(yield[ignored_ec]);
 			if (timer.expires_from_now() <= std::chrono::seconds(0)) {
-				udp_socket.close();
+				udp_socket.close(ignored_ec);
 			}
-		}
-#if 0
-		timer.expires_from_now(std::chrono::seconds(5));
-		timer.async_wait(yield[ignored_ec]);
-#endif
-		start();
+		}		
+		strand.post(boost::bind(&DUMMY_CLIENT::start,this));
 	});
 }
 

@@ -21,7 +21,7 @@ int main()
 	try {
 		boost::asio::io_service io_service;
 
-		for (int i = 0; i < 1; i++) {
+		for (int i = 0; i < 10; i++) {
 			new DUMMY_CLIENT(io_service, boost::asio::ip::make_address("139.180.204.124"), 12312, 10000 + i);
 		}
 
